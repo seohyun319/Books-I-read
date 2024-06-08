@@ -21,6 +21,12 @@
   - [1) 싱글 스레드 자바스크립트](#1-싱글-스레드-자바스크립트)
   - [2) 이벤트 루프란?](#2-이벤트-루프란)
   - [3) 태스크 큐와 마이크로 태스크 큐](#3-태스크-큐와-마이크로-태스크-큐)
+- [1.6. 리액트에서 자주 사용하는 자바스크립트 문법](#16-리액트에서-자주-사용하는-자바스크립트-문법)
+  - [1) 구조 분해 할당(Destructuring assignment)](#1-구조-분해-할당destructuring-assignment)
+  - [2) 전개 구문](#2-전개-구문)
+  - [3) 객체 초기자](#3-객체-초기자)
+  - [4) Array 프로토타입의 메서드: map, filter, reduce, forEach](#4-array-프로토타입의-메서드-map-filter-reduce-foreach)
+  - [5) 삼항 조건 연산자](#5-삼항-조건-연산자)
 
 # 1.1. 자바스크립트의 동등 비교
 
@@ -337,4 +343,123 @@ setter, getter, extends
 # summary 💡
 
 싱글 스레드 자바스크립트는 태스크 큐, 이벤트 루프, 마이크로 태스크 큐로 이벤트 처리
+```
+
+---
+
+# 1.6. 리액트에서 자주 사용하는 자바스크립트 문법
+
+## 1) 구조 분해 할당(Destructuring assignment)
+
+- 배열 또는 객체의 값을 분해해 개별 변수에 즉시 할당
+- 배열 구조 분해 할당
+
+  ```tsx
+  // before
+  const array = [undefined, 2, 3, 4, 5];
+  const [first = 6, , third, ...arrayRest] = array;
+  // 기본값 선언은 undefined인 경우에만 적용. first는 6이 됨.
+
+  // after transfiled by Babel
+  var array = [undefined, 2, 3, 4, 5];
+  var _array$ = array[0],
+    first = _array$ === void 0 ? 6 : _array$,
+    third = array[2],
+    arrayRest = array.slice(3);
+  ```
+
+- 객체 구조 분해 할당
+
+  - 내부 이름으로 꺼내온다는 차이점.
+  - 변수에 있는 값으로 꺼내오는 방식(계산된 속성 이름 방식)도 가능
+
+    ```tsx
+    const key = "a";
+    const object = {
+      a: 1,
+      b: 1,
+    };
+
+    const { [key]: a } = object;
+    // a = 1
+    ```
+
+  - [바벨 트랜스파일링 전후 코드 보러 가기](./objectDestructuringConvertedByBabel.js)
+  - 트랜스파일링 거치면 번들링 크기가 상대적으로 크기에 개발 환경이 ES5를 고려해야 하고 객체 구조 분해 할당을 자주 쓰지 않는 경우 꼭 써야 하는지 고려 필요
+  - 객체 구조 분해 할당 통한 …rest 함수 필요하다면 [lodash.omit](https://lodash.com/docs/4.17.15#omit)이나 [ramda.omit](https://github.com/ramda/ramda/blob/v0.28.0/source/omit.js)같은 라이브러리를 고려해보는 게 나음.
+
+## 2) 전개 구문
+
+- 배열이나 객체, 문자열과 같이 순회할 수 있는 값을 전개해 간결하게 사용할 수 있는 구문
+- 배열의 전개 구문
+  ```tsx
+  const arr1 = ["a", "b"];
+  const arr2 = [...arr1];
+  arr1 === arr2; // false. 값만 복사하고 참조는 다름.
+  const arr3 = [...arr1, "c", "d"]; //["a", "b", "c", "d"]
+  ```
+  - 트랜스파일링 → 값 단순 복사
+- 객체의 전개 구문
+  ```tsx
+  const obj1 = { a: 1, b: 2 };
+  const obj2 = { b: 4, c: 3 };
+  const newObj = { ...obj1, ...obj2 };
+  // 값 덮어쓰기 되기에 순서 주의
+  // { "a": 1, "b": 4, "c": 3 }
+  ```
+  - 트랜스파일링 → 객체의 속성값 및 설명자 확인, 심벌 체크 등
+    - [트랜파일링 전후 코드 보러 가기](./objectSpreadConvertedByBabel.js)
+
+## 3) 객체 초기자
+
+- 객체 선언할 때 객체에 넣고자 하는 키와 값을 가지고 있는 변수가 이미 존재한다면 해당 값을 간결하게 넣어줄 수 있는 방식
+- 객체를 좀 더 간편하게 선언할 수 있어 유용함. 트랜스파일 이후에도 큰 부담이 없음.
+
+```tsx
+// before
+const a = 1;
+const b = 2;
+// 객체 초기자. a: a 방식 말고 a로 넣을 수 있음.
+const obj = {
+  a,
+  b,
+};
+
+// after
+var a = 1;
+var b = 2;
+var obj = {
+  a: a,
+  b: b,
+};
+```
+
+## 4) Array 프로토타입의 메서드: map, filter, reduce, forEach
+
+- ES5부터 사용한 문법이라 별도의 트랜스파일이나 폴리필이 없어도 부담 없이 사용 가능
+- Array.prototype.`map`: 배열의 각 아이템을 순회하며 각 아이템을 콜백으로 연산한 결과로 구성된 새로운 배열 반환
+- Array.prototype.`filter`: 기존 배열에 대해 어떤 조건을 만족하는 새로운 배열 반환. 콜백 함수의 truthy 조건 만족하는 경우에만 해당 원소 반환. 필터링.
+- Array.prototype.`reduce`: reducer 콜백 함수를 실행하고, 이를 초깃값에 누적해 결과 반환.
+  ```tsx
+  const arr = [1, 2, 3, 4, 5];
+  // reducer 콜백함수의 첫 번째 인수: 앞서 선언한 초깃값의 현재값.
+  // 두 번째 인수: 현재 배열의 아이템
+  const sum = arr.reduce((result, item) => {
+    return result + item;
+  }, 0);
+  ```
+- Array.prototype.`forEach`: 배열 순회하며 콜백 함수를 실행하기만 하는 메서드. 반환값 없음. 에러를 던지거나 프로세스를 종료하지 않는 이상 break, return 등 뭘 사용해도 멈출 수 없음. return이 함수의 return이 아닌 콜백 함수의 return으로 간주되기 때문.
+
+## 5) 삼항 조건 연산자
+
+- 조건문 ? 참일*때*값 : 거짓일*때*값
+
+<br />
+
+```markdown
+# summary 💡
+
+...: 구조 분해 할당, 전개 구문
+객체 초기자
+map, filter, reduce, forEach
 ```
