@@ -27,6 +27,10 @@
   - [3) 객체 초기자](#3-객체-초기자)
   - [4) Array 프로토타입의 메서드: map, filter, reduce, forEach](#4-array-프로토타입의-메서드-map-filter-reduce-foreach)
   - [5) 삼항 조건 연산자](#5-삼항-조건-연산자)
+- [1.7. 선택이 아닌 필수, 타입스크립트](#17-선택이-아닌-필수-타입스크립트)
+  - [1) 타입스크립트란](#1-타입스크립트란)
+  - [2) 리액트 코드를 효과적으로 작성하기 위한 타입스크립트 활용법](#2-리액트-코드를-효과적으로-작성하기-위한-타입스크립트-활용법)
+  - [3) 타입스크립트 전환 가이드](#3-타입스크립트-전환-가이드)
 
 # 1.1. 자바스크립트의 동등 비교
 
@@ -463,3 +467,62 @@ var obj = {
 객체 초기자
 map, filter, reduce, forEach
 ```
+
+---
+
+# 1.7. 선택이 아닌 필수, 타입스크립트
+
+## 1) 타입스크립트란
+
+- 기존 자바스크립트 문법에 타입을 가미한 자바스크립트의 슈퍼셋
+
+## 2) 리액트 코드를 효과적으로 작성하기 위한 타입스크립트 활용법
+
+- any 대신 unknown을 사용하자 - 불가피하게 타입을 단정할 수 없는 경우에 사용.
+  - unknown: 모든 값을 할당할 수 있음. top type. 근데 any와 다르게 이 값을 바로 사용하는 것은 불가. 타입을 좁혀야 함. if (typeof callback === ‘function’) 이런 식으로.
+  - never: 어떠한 타입도 들어올 수 없음. bottom type.
+- 타입 가드를 적극 활용하자
+  - instanceof: 지정한 인스턴스가 특정 클래스의 인스턴스인지 확인
+  - typeof: 특정 요소에 대한 자료형 확인
+  - in: 어떤 객체에 키가 존재하는지 확인. property in object 형태로 사용. if (’age’ in person) 이런 식.
+- 제네릭(generic)
+
+  - 함수나 클래스 내부에서 다양한 타입에 대응할 수 있도록 도와줌. 타입만 다른 비슷한 작업을 하는 컴포넌트를 단일 제네릭 컴포넌트로 선언해 간결하게 작성 가능.
+
+  ```tsx
+  const [state, useState] = useState<string>("");
+
+  function multipleGeneric<First, Last>(a1: First, a2: Last): [First, Last] {
+    return [a1, a2];
+  }
+  const [a, b] = multipleGeneric<string, boolean>("true", true);
+  ```
+
+- 인덱스 시그니처: 객체의 키를 정의하는 방식. 키에 원하는 타입 부여 가능해 동적인 객체 정의할 때 유용.
+
+  - 객체의 키 타입을 좁히는 법
+
+    ```tsx
+    // record를 사용
+    type Hello = Record<"hello" | "hi", string>;
+
+    const hello: Hello = {
+      hello: "hello",
+      hi: "hi",
+    };
+
+    // 타입을 사용한 인덱스 시그니처
+    type Hello = { [key in "hello | hi"]: string };
+
+    const hello: Hello = {
+      hello: "hello",
+      hi: "hi",
+    };
+    ```
+
+## 3) 타입스크립트 전환 가이드
+
+- tsconfig.json 먼저 작성하기
+- JSDoc과 @ts-check를 활용해 점진적으로 전환하기
+- 타입 기반 라이브러리 사용을 위해 @types 모듈 설치하기
+- 파일 단위로 조금씩 전환하기
