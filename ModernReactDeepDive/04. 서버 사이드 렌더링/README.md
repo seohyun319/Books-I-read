@@ -58,3 +58,42 @@
         - Shared Element Transitions: 페이지 라우팅이 일어났을 때 두 페이지에 동일 요소가 있다면 해당 콘텍스트를 유지해 부드럽게 전환되게 하는 기법
 - 현대의 서버 사이드 렌더링
   - SPA, SSR 두 장점을 모두 취한 방식으로 작동. 최초 웹사이트 진입 시에는 서버에서 완성된 HTML을 제공받음. 이후 라우팅에서는 서버에서 내려받은 JS를 기반으로 SPA처럼 작동함.
+
+---
+
+# 4.2. 서버 사이드 렌더링을 위한 리액트 API 살펴보기
+
+## 1) renderToString
+
+- 인수로 넘겨받은 리액트 컴포넌트를 렌더링해 HTML 문자열로 반환하는 함수
+- 최초의 페이지를 HTML로 먼저 렌더링하는 역할
+  - 초기 렌더링 성능 뛰어남
+  - 메타 정보 제공 가능
+- 이벤트 핸들러 등 JS 코드는 포함하지 않음.
+- 렌더div#root에 존재하는 속성인 data-reactroot
+
+## 2) renderToStaticMarkup
+
+- renderToString과 매우 유사하나, data-reactroot와 같은 리액트에서만 사용하는 추가적인 DOM 속성을 만들지 않음.
+  - 결과물인 HTML의 크기를 아주 약간이라도 줄일 수 있다는 장점
+- 순수한 HTML만 반환 → 리액트에서 제공하는 useEffect와 같은 브라우저 API를 절대로 실행 불가
+  - 리액트의 이벤트 리스너가 필요 없는 완전히 순수한 HTML을 만들 때만 사용 (블로그 글, 상품 약관 정보 등 아무런 액션 없는 정적인 내용)
+
+## 3) renderToNodeStream
+
+- renderToString과 결과물이 완전히 동일
+- 차이점
+  - 브라우저에서 사용하는 것이 완전 불가. Node.js 환경에 의존적
+  - 결과물의 타입이 string이 아니라 Node.js 환경에서만 사용 가능한 ReadableStream
+- 스트림을 활용해 큰 크기의 데이터를 청크 단위로 분리해 순차 처리하는 장점
+- 대부분의 널리 알려진 리액트 서버 사이드 렌더링 프레임워크는 모두 renderToString 대신 renderToNodeStream을 채택
+
+## 4) renderToStaticNodeStream
+
+- renderToNodeStream과 제공하는 결과물은 동일
+- renderToStaticMarkup과 마찬가지로 리액트 JS에 필요한 리액트 속성이 제공되지 않음. 마찬가지로 hydrate를 할 필요가 없는 순수 HTML 결과물이 필요할 때 사용하는 메서드
+
+## 5) hydrate
+
+- renderToString과 renderToNodeStream으로 생성된 HTML 콘텐츠에 자바스크립트 핸들러나 이벤트를 붙이는 역할
+- 단순히 이벤트나 핸들러를 추가하는 것 이외에도 렌더링을 한 번 수행하면서 hydrate가 수행한 렌더링 결과물 HTML과 인수로 넘겨받은 HTML을 비교하는 작업을 수행. 비교해서 결과물 다르면 에러 내는데, 불일치 발생하면 hydrate가 렌더링한 기준으로 웹페이지를 그림
